@@ -107,16 +107,51 @@ namespace LoanApplicationProcessor.Tests
             Assert.Equal(1, sut.GetAllApplications().Count());
         }
 
-        [Fact]
-        public void ThrowArgumentExceptionForInvalidStatusApplication()
+        [Theory]
+        [MemberData(nameof(GetInvalidApplications))]
+        public void ThrowArgumentExceptionForInvalidApplication(LoanApplication application)
         {
             FinancialInstitution sut = new FinancialInstitution();
 
             Assert.Throws<ArgumentException>(() =>
             {
-                sut.Submit(new LoanApplication
-                    { Status = ApplicationStatus.Approved, Name = "John Doe", Pan = "ABCDE1234F", CreditScore = 750 });
+                sut.Submit(application);
             });
+        }
+
+        public static IEnumerable<object[]> GetInvalidApplications()
+        {
+            return new List<object[]>
+            {
+                new object[]
+                {
+                    new LoanApplication
+                    {
+                        Status = ApplicationStatus.Approved, Name = "John Doe", Pan = "ABCDE1234F", CreditScore = 750
+                    }
+                },
+                new object[]
+                {
+                    new LoanApplication
+                    {
+                        Status = ApplicationStatus.Submitted, Name = "John Doe", Pan = "ABCDDE1234F", CreditScore = 750
+                    }
+                },
+                new object[]
+                {
+                    new LoanApplication
+                    {
+                        Status = ApplicationStatus.Submitted, Name = "John Doe", Pan = "ABCDE1234F", CreditScore = 999
+                    }
+                },
+                new object[]
+                {
+                    new LoanApplication
+                    {
+                        Status = ApplicationStatus.Submitted, Name = "John Doe", Pan = "ABCDE1234F", CreditScore = 250
+                    }
+                },
+            };
         }
     }
 }
