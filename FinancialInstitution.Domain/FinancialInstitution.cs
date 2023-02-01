@@ -52,18 +52,66 @@ namespace LoanApplicationProcessor.Domain
             return _applications.Where(a => a.Status == ApplicationStatus.Approved);
         }
 
-        public void VerifyApplication(int id, bool isVerified)
+        public void MarkVerificationSuccess()
         {
-            var application = _applications.First(a => a.Id == id);
+            var application = GetPendingVerificationApplication();
 
-            application.Status = isVerified ? ApplicationStatus.VerificationSuccess : ApplicationStatus.VerificationFailed;
+            application.Status = ApplicationStatus.VerificationSuccess;
         }
 
-        public void ApproveApplication(int id)
+        public void MarkVerificationFailed()
         {
-            var application = _applications.First(a => a.Id == id);
+            var application = GetPendingVerificationApplication();
+
+            application.Status = ApplicationStatus.VerificationFailed;
+        }
+
+        public void ApproveApplication()
+        {
+            var application = GetPendingApprovalApplication();
 
             application.Status = ApplicationStatus.Approved;
+        }
+
+        public void RejectApplication()
+        {
+            var application = GetPendingApprovalApplication();
+
+            application.Status = ApplicationStatus.Rejected;
+        }
+
+        public void ResubmitApplication(int id)
+        {
+            var application = _applications.Where(a => a.Id == id && a.Status == ApplicationStatus.VerificationFailed)
+                .First();
+
+            application.Status = ApplicationStatus.Resumbitted;
+        }
+
+        private LoanApplication GetPendingVerificationApplication()
+        {
+            return _applications
+                .Where(a => a.Status == ApplicationStatus.Submitted || a.Status == ApplicationStatus.Resumbitted)
+                .OrderBy(a => a.Id).First();
+        }
+
+        private LoanApplication GetPendingApprovalApplication()
+        {
+            return _applications
+                .Where(a => a.Status == ApplicationStatus.VerificationSuccess)
+                .OrderBy(a => a.Id).First();
+        }
+
+        public IEnumerable<LoanApplication> GetResubmittedApplications()
+        {
+            return _applications
+                .Where(a => a.Status == ApplicationStatus.Resumbitted);
+        }
+
+        public IEnumerable<LoanApplication> GetRejectedApplications()
+        {
+            return _applications
+                .Where(a => a.Status == ApplicationStatus.Rejected);
         }
     }
 
@@ -80,10 +128,8 @@ namespace LoanApplicationProcessor.Domain
     {
         Submitted,
         Resumbitted,
-        PendingVerification,
         VerificationSuccess,
         VerificationFailed,
-        PendingApproval,
         Approved,
         Rejected
     }

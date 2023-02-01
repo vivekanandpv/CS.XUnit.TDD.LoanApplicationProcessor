@@ -65,7 +65,7 @@ namespace LoanApplicationProcessor.Tests
             sut.Submit(new LoanApplication{Id = 3, Status = ApplicationStatus.Submitted, CreditScore = 770, Pan = "ABCDE1254F"});
             sut.Submit(new LoanApplication{Id = 4, Status = ApplicationStatus.Submitted, CreditScore = 780, Pan = "ABCDE1264F"});
 
-            sut.VerifyApplication(1, false);
+            sut.MarkVerificationFailed();
 
             IEnumerable<LoanApplication> applications = sut.GetVerificationFailedApplications();
             Assert.All(
@@ -88,7 +88,8 @@ namespace LoanApplicationProcessor.Tests
             sut.Submit(new LoanApplication{Id = 3, Status = ApplicationStatus.Submitted, CreditScore = 770, Pan = "ABCDE1254F"});
             sut.Submit(new LoanApplication{Id = 4, Status = ApplicationStatus.Submitted, CreditScore = 780, Pan = "ABCDE1264F"});
 
-            sut.ApproveApplication(2);
+            sut.MarkVerificationSuccess();
+            sut.ApproveApplication();
 
             IEnumerable<LoanApplication> applications = sut.GetApprovedApplications();
             Assert.All(
@@ -121,6 +122,69 @@ namespace LoanApplicationProcessor.Tests
             {
                 sut.Submit(application);
             });
+        }
+
+        [Fact]
+        public void ResubmitTheVerificationFailedApplicationById()
+        {
+            FinancialInstitution sut = new FinancialInstitution();
+            sut.Submit(new LoanApplication{Status = ApplicationStatus.Submitted, Id = 1, Name = "John Doe", Pan = "ABCDE1234F", CreditScore = 750});
+
+            sut.MarkVerificationFailed();
+
+            sut.ResubmitApplication(1);
+
+            IEnumerable<LoanApplication> applications = sut.GetResubmittedApplications();
+
+            Assert.IsAssignableFrom<IEnumerable<LoanApplication>>(applications);
+            Assert.Equal(1, applications.Count());
+        }
+
+        [Fact]
+        public void ReturnAllResubmittedApplications()
+        {
+            FinancialInstitution sut = new FinancialInstitution();
+            sut.Submit(new LoanApplication{Status = ApplicationStatus.Submitted, Id = 1, Name = "John Doe", Pan = "ABCDE1234F", CreditScore = 750});
+            sut.Submit(new LoanApplication{Status = ApplicationStatus.Submitted, Id = 2, Name = "John Doe", Pan = "ABCDE1234F", CreditScore = 750});
+            sut.Submit(new LoanApplication{Status = ApplicationStatus.Submitted, Id = 3, Name = "John Doe", Pan = "ABCDE1234F", CreditScore = 750});
+
+
+            sut.MarkVerificationFailed();
+            sut.MarkVerificationFailed();
+
+            sut.ResubmitApplication(1);
+            sut.ResubmitApplication(2);
+
+            IEnumerable<LoanApplication> applications = sut.GetResubmittedApplications();
+
+            Assert.IsAssignableFrom<IEnumerable<LoanApplication>>(applications);
+            Assert.Equal(2, applications.Count());
+        }
+
+        [Fact]
+        public void ApproveVerifiedApplication()
+        {
+            FinancialInstitution sut = new FinancialInstitution();
+            sut.Submit(new LoanApplication{Status = ApplicationStatus.Submitted, Id = 1, Name = "John Doe", Pan = "ABCDE1234F", CreditScore = 750});
+            sut.MarkVerificationSuccess();
+            sut.ApproveApplication();
+            IEnumerable<LoanApplication> applications = sut.GetApprovedApplications();
+
+            Assert.IsAssignableFrom<IEnumerable<LoanApplication>>(applications);
+            Assert.Equal(1, applications.Count());
+        }
+
+        [Fact]
+        public void RejectVerifiedApplication()
+        {
+            FinancialInstitution sut = new FinancialInstitution();
+            sut.Submit(new LoanApplication{Status = ApplicationStatus.Submitted, Id = 1, Name = "John Doe", Pan = "ABCDE1234F", CreditScore = 750});
+            sut.MarkVerificationSuccess();
+            sut.RejectApplication();
+            IEnumerable<LoanApplication> applications = sut.GetRejectedApplications();
+
+            Assert.IsAssignableFrom<IEnumerable<LoanApplication>>(applications);
+            Assert.Equal(1, applications.Count());
         }
 
         public static IEnumerable<object[]> GetInvalidApplications()
