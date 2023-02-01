@@ -28,7 +28,7 @@ namespace LoanApplicationProcessor.Domain
                 throw new ArgumentException("Invalid credit score");
             }
 
-            var panRegex = new Regex("^[A-Z]{5}[0-9]{3}[A-Z]$");
+            var panRegex = new Regex("^[A-Z]{5}[0-9]{4}[A-Z]$");
             if (!panRegex.IsMatch(application.Pan))
             {
                 throw new ArgumentException("Invalid PAN");
@@ -39,7 +39,7 @@ namespace LoanApplicationProcessor.Domain
 
         public IEnumerable<LoanApplication> GetPendingVerificationApplications()
         {
-            return _applications.Where(a => a.Status == ApplicationStatus.PendingVerification);
+            return _applications.Where(a => a.Status == ApplicationStatus.Submitted || a.Status == ApplicationStatus.Resumbitted);
         }
 
         public IEnumerable<LoanApplication> GetVerificationFailedApplications()
@@ -51,10 +51,25 @@ namespace LoanApplicationProcessor.Domain
         {
             return _applications.Where(a => a.Status == ApplicationStatus.Approved);
         }
+
+        public void VerifyApplication(int id, bool isVerified)
+        {
+            var application = _applications.First(a => a.Id == id);
+
+            application.Status = isVerified ? ApplicationStatus.VerificationSuccess : ApplicationStatus.VerificationFailed;
+        }
+
+        public void ApproveApplication(int id)
+        {
+            var application = _applications.First(a => a.Id == id);
+
+            application.Status = ApplicationStatus.Approved;
+        }
     }
 
     public class LoanApplication
     {
+        public int Id { get; set; }
         public ApplicationStatus Status { get; set; }
         public string Name { get; set; }
         public string Pan { get; set; }
