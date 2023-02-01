@@ -96,5 +96,27 @@ namespace LoanApplicationProcessor.Tests
 
             Assert.Equal(1, applications.Count());
         }
+
+        [Fact]
+        public void SubmitValidApplication()
+        {
+            FinancialInstitution sut = new FinancialInstitution();
+
+            sut.Submit(new LoanApplication{Status = ApplicationStatus.Submitted, Name = "John Doe", Pan = "ABCDE1234F", CreditScore = 750});
+
+            Assert.Equal(1, sut.GetAllApplications().Count());
+        }
+
+        [Fact]
+        public void ThrowArgumentExceptionForInvalidStatusApplication()
+        {
+            FinancialInstitution sut = new FinancialInstitution();
+
+            Assert.Throws<ArgumentException>(() =>
+            {
+                sut.Submit(new LoanApplication
+                    { Status = ApplicationStatus.Approved, Name = "John Doe", Pan = "ABCDE1234F", CreditScore = 750 });
+            });
+        }
     }
 }
